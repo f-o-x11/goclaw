@@ -37,13 +37,13 @@ Click **Test Connection**; it should list the server's tools. Then **Create**.
 ```
 
 The URL passes the normal SSRF validation for SSE/streamable-HTTP transports
-(see [09-security.md](09-security.md)); no host allowlist entry is needed.
+(see [09-security.md](./09-security.md)); no host allowlist entry is needed.
 
 ## Grant it to an agent
 
-The server exposes about two dozen tools, including ones that change or delete
-existing pages. Most agents only need to publish. Limit the grant with
-`tool_allow`, which takes original MCP tool names:
+The server exposes roughly 27 tools, most of them account and domain management,
+including ones that change or delete existing pages. Most agents only need to
+publish. Limit the grant with `tool_allow`, which takes original MCP tool names:
 
 ```json
 {
@@ -69,7 +69,14 @@ publish it for one hour"*. The agent calls `publish_site` with a `files` map
 
 The token is part of the tool result, so it appears in the session. Keep it if
 you plan to update or delete the page later. Use `ttl_seconds` for throwaway pages
-so they expire on their own.
+so they expire on their own. If that owner token leaks and you still have it,
+call `rotate_token` (add it to `tool_allow` when the agent should be able to).
+It requires the current token, returns a new one once for the same owner, and
+every site carries over. Omit `overlap_seconds`, or pass 0, and the previous
+token stops working immediately; set it from 1 to 300 to keep both working for
+that many seconds, after which the old token returns 401 `token_revoked`.
+`rotate_token` does not restore a token you no longer have. With no recovery
+email, a lost token stays unrecoverable and the pages stay online.
 
 Limits, the full tool list and the HTTP API are in the
 [deed.page docs](https://deed.page/docs). An optional agent skill is available at
